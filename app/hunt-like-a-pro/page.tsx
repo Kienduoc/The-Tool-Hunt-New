@@ -21,7 +21,7 @@ export default async function HuntLikeAProPage({
                 <h1 className="text-4xl font-bold">Hunt Like a Pro 🎓</h1>
                 <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                     Deep dives, tutorials, and masterclasses on the latest AI tools.
-                    Don&apos;t just find a tool—master it.
+                    Don&apos;t just find a tool—master it..
                 </p>
             </div>
 
