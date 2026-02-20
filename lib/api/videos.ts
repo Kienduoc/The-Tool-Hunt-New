@@ -10,14 +10,21 @@ export type VideoWithTools = {
   thumbnail_url: string
   duration: number
   category: string
-  channel_name: string // Added
-  ai_summary: string | null // Added
+  channel_name: string
+  ai_summary: string | null
+  view_count?: number
   created_at: string
   video_tools: {
     tools: {
       name: string
       slug: string
       logo_url: string | null
+      description?: string | null
+      category?: string
+      pricing_type?: string
+      use_cases?: string[]
+      website_url?: string
+      affiliate_url?: string | null
     }
   }[]
   video_timestamps: {
@@ -62,11 +69,6 @@ export const getVideos = cache(async (category?: string) => {
 export const getVideoBySlug = cache(async (id: string) => {
   const supabase = await createServerClient()
 
-  // Note: We are using ID for now, but should support slug if we add a slug field to videos table
-  // For now, assuming navigation passes ID or we lookup by ID if slug is not present
-  // Actually, 'youtube_id' is unique, could use that as slug?
-  // Let's use ID for direct fetching for now.
-
   const { data, error } = await supabase
     .from('videos')
     .select(`
@@ -75,7 +77,13 @@ export const getVideoBySlug = cache(async (id: string) => {
         tools (
           name,
           slug,
-          logo_url
+          logo_url,
+          description,
+          category,
+          pricing_type,
+          use_cases,
+          website_url,
+          affiliate_url
         )
       ),
       video_timestamps (
