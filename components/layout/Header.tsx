@@ -1,11 +1,15 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getHuntedCount } from '@/lib/api/hunted'
 import Button from '@/components/ui/Button'
 import { Search, Menu } from 'lucide-react'
 
 export default async function Header() {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const [{ data: { user } }, huntedCount] = await Promise.all([
+        supabase.auth.getUser(),
+        getHuntedCount()
+    ])
 
     return (
         <header className="border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-50">
@@ -34,19 +38,24 @@ export default async function Header() {
                             <span className="text-xl">🎯</span>
                             <span>The Hunt Is ON!</span>
                         </Link>
-                        <Link
+                        {/* <Link
                             href="/news"
                             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-500/10 text-foreground/80 hover:text-blue-500 transition-all font-semibold"
                         >
                             <span className="text-xl">📰</span>
                             <span>News</span>
-                        </Link>
+                        </Link> */}
                         <Link
                             href="/hunted"
                             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent text-foreground/80 hover:text-foreground transition-all font-semibold"
                         >
                             <span className="text-xl">💼</span>
                             <span>Hunted</span>
+                            {huntedCount > 0 && (
+                                <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] font-bold text-white bg-emerald-500 rounded-full leading-none">
+                                    {huntedCount}
+                                </span>
+                            )}
                         </Link>
                     </nav>
 

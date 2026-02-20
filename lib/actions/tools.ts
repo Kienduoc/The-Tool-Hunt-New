@@ -23,15 +23,10 @@ export async function toggleHuntTool(toolId: string) {
     if (existing) {
         // Unhunt
         await supabase.from('hunted_tools').delete().eq('id', existing.id)
-
-        // Decrement hunt count
-        await supabase.rpc('decrement_hunt_count', { tool_id: toolId }) // Assuming RPC exists, or just use raw sql if permitted, or ignore count for now if tricky
-        // For now simple decrement update:
-        // supabase.from('tools').update({ hunt_count: count - 1 }) // Concurrency issue. 
-        // Let's iterate: just toggle relation first.
+        await supabase.rpc('decrement_hunt_count', { tool_id: toolId })
 
         revalidatePath('/the-hunt-is-on')
-        revalidatePath(`/the-hunt-is-on/[slug]`)
+        revalidatePath('/hunted')
         return { hunted: false }
     } else {
         // Hunt
@@ -39,12 +34,10 @@ export async function toggleHuntTool(toolId: string) {
             user_id: user.id,
             tool_id: toolId
         })
-
-        // Increment hunt count (Optimistic or RPC)
-        // await supabase.rpc('increment_hunt_count', { tool_id: toolId })
+        await supabase.rpc('increment_hunt_count', { tool_id: toolId })
 
         revalidatePath('/the-hunt-is-on')
-        revalidatePath(`/the-hunt-is-on/[slug]`)
+        revalidatePath('/hunted')
         return { hunted: true }
     }
 }

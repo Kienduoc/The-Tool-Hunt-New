@@ -1,9 +1,8 @@
 import { getVideoBySlug } from '@/lib/api/videos'
-import VideoPlayer from '@/components/videos/VideoPlayer'
+import VideoDetailClient from '@/components/videos/VideoDetailClient'
 import Link from 'next/link'
-import { ArrowLeft, Clock, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Clock, Eye, Share2, MapPin } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import Button from '@/components/ui/Button'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -13,6 +12,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         title: `${video.title} | Hunt Like a Pro`,
         description: video.description,
     }
+}
+
+function formatDuration(seconds: number) {
+    const h = Math.floor(seconds / 3600)
+    const m = Math.floor((seconds % 3600) / 60)
+    const s = seconds % 60
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function formatViews(count?: number) {
+    if (!count) return null
+    if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M views`
+    if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K views`
+    return `${count} views`
 }
 
 export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,123 +39,61 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
 
     return (
         <div className="container py-8 max-w-6xl">
-            <Link href="/hunt-like-a-pro" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-6 transition-colors">
+            {/* Back Button */}
+            <Link
+                href="/hunt-like-a-pro"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary mb-6 transition-colors px-4 py-2 rounded-full border border-border hover:border-primary/40 bg-card/50"
+            >
                 <ArrowLeft className="w-4 h-4" />
-                Back to Tutorials
+                Quay lại Hunt Like a Pro
             </Link>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content: Video & Details */}
-                <div className="lg:col-span-2 space-y-8">
-                    <VideoPlayer videoId={video.youtube_id} />
-
-                    <div className="space-y-4">
-                        <h1 className="text-3xl font-bold">{video.title}</h1>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {Math.floor(video.duration / 60)} min
-                            </span>
-                            <span>•</span>
-                            <span className="font-medium text-foreground">{video.channel_name}</span>
-                            <span>•</span>
-                            <span className="capitalize">{video.category}</span>
-                        </div>
-
-                        <div className="prose dark:prose-invert max-w-none p-6 bg-card rounded-xl border border-border">
-                            <h3 className="text-lg font-semibold mb-2">Description</h3>
-                            <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                                {video.description}
-                            </p>
-                        </div>
-
-                        {/* AI Summary Section */}
-                        {video.ai_summary && (
-                            <div className="p-6 bg-primary/5 rounded-xl border border-primary/20">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                                        <span className="text-xl">🤖</span>
-                                    </div>
-                                    <h3 className="text-lg font-bold text-primary">AI Key Takeaways</h3>
-                                </div>
-                                <div className="prose dark:prose-invert max-w-none text-muted-foreground">
-                                    <p className="whitespace-pre-wrap leading-relaxed">{video.ai_summary}</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+            {/* ── Video Player + Tools Sidebar + Description (Client) ── */}
+            <VideoDetailClient
+                videoId={video.youtube_id}
+                aiSummary={video.ai_summary}
+                description={video.description}
+                tools={video.video_tools}
+            >
+                {/* Category Tag + Title + Meta — rendered between video and description */}
+                <div className="flex items-start justify-between mb-2">
+                    <span className="inline-block px-3 py-1 text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full">
+                        {video.category}
+                    </span>
+                    <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                        <Share2 className="w-4 h-4" />
+                        Share
+                    </button>
                 </div>
 
-                {/* Sidebar: Tools & Timestamps */}
-                <div className="space-y-6">
-                    {/* Featured Tools */}
-                    <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                            <span className="text-xl">🛠️</span> Tools in this video
-                        </h3>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3 leading-tight">
+                    {video.title}
+                </h1>
 
-                        {video.video_tools?.length > 0 ? (
-                            <div className="space-y-4">
-                                {video.video_tools.map(({ tools }) => (
-                                    <div key={tools.slug} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors border border-transparent hover:border-border">
-                                        <div className="w-10 h-10 bg-background rounded-lg border border-border flex-shrink-0 flex items-center justify-center overflow-hidden">
-                                            {tools.logo_url ? (
-                                                <img src={tools.logo_url} alt={tools.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="font-bold">{tools.name[0]}</span>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-medium truncate">{tools.name}</h4>
-                                            <Link href={`/the-hunt-is-on/${tools.slug}`} className="text-xs text-primary hover:underline flex items-center gap-1">
-                                                View Details <ExternalLink className="w-3 h-3" />
-                                            </Link>
-                                        </div>
-                                        {/* Add to Hunted Button (Future) */}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">No specific tools tagged.</p>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-border">
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <span className="font-medium text-foreground">{video.channel_name}</span>
+                        {formatViews(video.view_count) && (
+                            <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                    <Eye className="w-3.5 h-3.5" />
+                                    {formatViews(video.view_count)}
+                                </span>
+                            </>
                         )}
-
-                        <Link href="/the-hunt-is-on" className="block mt-4">
-                            <Button variant="outline" className="w-full">Browse All Tools</Button>
-                        </Link>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {formatDuration(video.duration)}
+                        </span>
                     </div>
-
-                    {/* Timestamps */}
-                    {video.video_timestamps?.length > 0 && (
-                        <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                <span className="text-xl">⏱️</span> Timestamps
-                            </h3>
-                            <div className="space-y-1 relative">
-                                {/* Timeline line */}
-                                <div className="absolute left-[19px] top-2 bottom-2 w-px bg-border -z-10" />
-
-                                {video.video_timestamps.map((ts) => (
-                                    <button
-                                        key={ts.timestamp}
-                                        className="flex items-start gap-4 p-2 w-full text-left hover:bg-muted/50 rounded-lg group transition-colors"
-                                    // onClick={() => seekTo(ts.timestamp)} // Needs client state interaction
-                                    >
-                                        <span className="w-10 text-xs font-mono bg-background border border-border rounded px-1.5 py-0.5 text-center shrink-0">
-                                            {Math.floor(ts.timestamp / 60)}:{String(ts.timestamp % 60).padStart(2, '0')}
-                                        </span>
-                                        <div>
-                                            <p className="text-sm font-medium group-hover:text-primary transition-colors">{ts.title}</p>
-                                            {ts.description && (
-                                                <p className="text-xs text-muted-foreground mt-0.5">{ts.description}</p>
-                                            )}
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    <button className="flex items-center gap-2 px-4 py-2 text-sm border border-border rounded-full hover:border-primary/40 hover:text-primary transition-colors bg-card/50">
+                        <MapPin className="w-4 h-4" />
+                        Ghim Video
+                    </button>
                 </div>
-            </div>
+            </VideoDetailClient>
         </div>
     )
 }

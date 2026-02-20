@@ -7,16 +7,22 @@ import {
     FileText,
     Users,
     Settings,
-    LogOut
+    LogOut,
+    Sparkles,
+    ClipboardCheck,
+    Cpu
 } from 'lucide-react'
 import { signOut } from '@/lib/auth/actions'
 
 const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
+    { icon: ClipboardCheck, label: 'Review Queue', href: '/admin/review-queue' },
     { icon: Wrench, label: 'Tools', href: '/admin/tools' },
     { icon: Video, label: 'Videos', href: '/admin/videos' },
+    { icon: Cpu, label: 'Video Processor', href: '/admin/videos/processor' },
     { icon: FileText, label: 'Articles', href: '/admin/articles' },
     { icon: Users, label: 'Users', href: '/admin/users' },
+    { icon: Sparkles, label: 'AI Writer', href: '/admin/writer' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ]
 
